@@ -9,25 +9,38 @@ import express from 'express'
 import http from 'http'
 import typeDefs from './graphql/typeDefs'
 import resolvers from './graphql/resolvers'
+import { getSession } from 'next-auth/react'
+import * as dotenv from 'dotenv'
+import { GraphQLContext } from './util/types'
 
 async function main() {
+	dotenv.config()
 	const app = express()
 	const httpServer = http.createServer(app)
 	const schema = makeExecutableSchema({
 		typeDefs,
 		resolvers,
 	})
+	const coresOptions = {
+		origin: process.env.CLIENT_ORIGIN,
+		credentials: true,
+	}
+
 	const server = new ApolloServer({
 		schema,
 		csrfPrevention: true,
-		context: async ({ req }) => ({ token: req.headers.token }),
+		context: async ({ req, res }): Promise<GraphQLContext> => {
+			const session = await getSession({ req })
+			console.log('Here is Session', session)
+			return { session }
+		},
 		plugins: [
 			ApolloServerPluginDrainHttpServer({ httpServer }),
 			ApolloServerPluginLandingPageLocalDefault({ embed: true }),
 		],
 	})
 	await server.start()
-	server.applyMiddleware({ app })
+	server.applyMiddleware({ app, cors: coresOptions })
 	await new Promise<void>((resolve) =>
 		httpServer.listen({ port: 4000 }, resolve)
 	)
