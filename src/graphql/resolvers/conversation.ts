@@ -1,7 +1,12 @@
+import { GraphQLContext } from '../../util/types'
 const resolvers = {
 	Mutation: {
-		createConversation: async () => {
-			console.log('Inside Create Conversation')
+		createConversation: async (
+			_: any,
+			args: { participantsIds: Array<string> },
+			context: GraphQLContext
+		) => {
+			console.log('Inside Create Conversation', args)
 		},
 	},
 }
