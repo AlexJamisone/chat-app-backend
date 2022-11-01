@@ -5,10 +5,10 @@ const resolvers = {
 	Mutation: {
 		createConversation: async (
 			_: any,
-			args: { participantsIds: Array<string> },
+			args: { participantIds: Array<string> },
 			context: GraphQLContext
-		) => {
-			const { participantsIds } = args
+		): Promise<{ conversationId: string}> => {
+			const { participantIds } = args
 			const { session, prisma } = context
 			if (!session?.user) {
 				throw new ApolloError('Not Authorize')
@@ -21,7 +21,7 @@ const resolvers = {
 					data: {
 						participants: {
 							createMany: {
-								data: participantsIds.map((id) => ({
+								data: participantIds.map((id) => ({
 									userId: id,
 									hasSeenLatestMessage: id === userId,
 								})),
@@ -30,6 +30,9 @@ const resolvers = {
 					},
 					include: conversationPopulated,
 				})
+				return {
+					conversationId: conversation.id
+				}
 			} catch (error) {
 				console.log(`CreateConversation Error`, error)
 				throw new ApolloError('Error creating conversation')
