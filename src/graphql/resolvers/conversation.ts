@@ -2,12 +2,17 @@ import { Prisma } from '@prisma/client'
 import { ApolloError } from 'apollo-server-core'
 import { GraphQLContext } from '../../util/types'
 const resolvers = {
+	Query: {
+		conversations: async (_: any, __: any, context: GraphQLContext) => {
+			console.log(`CONVERSATIONS QUERY`);
+		},
+	},
 	Mutation: {
 		createConversation: async (
 			_: any,
 			args: { participantIds: Array<string> },
 			context: GraphQLContext
-		): Promise<{ conversationId: string}> => {
+		): Promise<{ conversationId: string }> => {
 			const { participantIds } = args
 			const { session, prisma } = context
 			if (!session?.user) {
@@ -31,7 +36,7 @@ const resolvers = {
 					include: conversationPopulated,
 				})
 				return {
-					conversationId: conversation.id
+					conversationId: conversation.id,
 				}
 			} catch (error) {
 				console.log(`CreateConversation Error`, error)
@@ -40,19 +45,20 @@ const resolvers = {
 		},
 	},
 }
-export const participantsPopulated = Prisma.validator<Prisma.ConversationParticipantInclude>()({
-	user: {
-		select: {
-			id: true,
-			username: true,
+export const participantsPopulated =
+	Prisma.validator<Prisma.ConversationParticipantInclude>()({
+		user: {
+			select: {
+				id: true,
+				username: true,
+			},
 		},
-	},
-})
+	})
 
 export const conversationPopulated =
 	Prisma.validator<Prisma.ConversationInclude>()({
 		participants: {
-			include: participantsPopulated
+			include: participantsPopulated,
 		},
 		latestMessage: {
 			include: {
