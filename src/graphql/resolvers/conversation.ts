@@ -38,7 +38,7 @@ const resolvers = {
 			context: GraphQLContext
 		): Promise<{ conversationId: string }> => {
 			const { participantIds } = args
-			const { session, prisma } = context
+			const { session, prisma, pubsub } = context
 			if (!session?.user) {
 				throw new ApolloError('Not Authorize')
 			}
@@ -59,6 +59,9 @@ const resolvers = {
 					},
 					include: conversationPopulated,
 				})
+				pubsub.publish('CONVERSATION_CREATED', {
+					conversationCreated: conversation,
+				})
 				return {
 					conversationId: conversation.id,
 				}
@@ -66,6 +69,14 @@ const resolvers = {
 				console.log(`CreateConversation Error`, error)
 				throw new ApolloError('Error creating conversation')
 			}
+		},
+	},
+	Subscription: {
+		conversationCreated: {
+			subscribe: (_: any, __: any, context: GraphQLContext) => {
+				const { pubsub } = context
+				return pubsub.asyncIterator(['CONVERSATION_CREATED'])
+			},
 		},
 	},
 }
